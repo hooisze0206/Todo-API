@@ -1,0 +1,32 @@
+USE [MatchingEco_Dev]
+GO
+
+/****** Object:  View [dbo].[v_lot_report_1]    Script Date: 11/7/2025 3:58:49 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE OR ALTER VIEW [dbo].[v_lot_report_1]
+AS
+SELECT [lot]
+      ,[wafer_count]
+      ,[rule_name]
+      ,lrv.[parameter_id]
+      ,ac.parameter_aka
+      ,lrv.[process]
+      ,ac.group_id
+      ,ac.GroupName
+      ,[product_id]
+      ,[product_mean_value]
+      ,[product_std_value]
+      ,[lot_med_value]
+      ,REPLACE(REPLACE([wafers_failing_value], '{', ''), '}', '') AS [wafers_failing_value]
+      ,[action_time]
+      ,[detection_time]
+
+  FROM [MatchingEco_Dev].[dbo].[lot_rule_violation] lrv
+  left join [MatchingEco_Dev].[dbo].[v_active_params] ac on lrv.parameter_id = ac.Parameter_id
+GO
+
