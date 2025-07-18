@@ -13,7 +13,7 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",  # For React/Vue/Angular frontend
     "http://localhost:4200",
-    "https://hooisze0206.github.io/Todo-UI",
+    "https://hooisze0206.github.io",
 ]
 
 # Add CORS middleware
