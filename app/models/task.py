@@ -23,6 +23,7 @@ class SubTask(SQLModel, table=True):
 class TaskBase(SQLModel):
     """Base model for task data."""
     title: str = Field(index=True)
+    categories: str = Field(default=None)
     description: Optional[str] = Field(default=None)
     priority: int = Field(default=1, ge=1, le=5)
     completed: bool = Field(default=False)
@@ -60,6 +61,7 @@ class TaskRead(TaskBase):
 class TaskUpdate(SQLModel):
     """Model for updating a task."""
     title: Optional[str] = None
+    categories: Optional[str] = None
     description: Optional[str] = None
     priority: Optional[int] = None
     completed: Optional[bool] = None

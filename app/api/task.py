@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, asc, desc
 from typing import List
 
 from app.database.config import get_session
+from app.models.response_model import ResponseModel
 from app.models.task import Task, TaskCreate, TaskRead, TaskUpdate
 from app.crud import task as task_crud
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
-@router.post("/", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ResponseModel, status_code=status.HTTP_201_CREATED)
 def create_task(*, session: Session = Depends(get_session), task: TaskCreate):
     """
     Create a new task.
@@ -23,10 +24,14 @@ def create_task(*, session: Session = Depends(get_session), task: TaskCreate):
     db_task = Task.from_orm(task)
     print(f"Creating task: {db_task}")
 
-    # Add to database
-    task_crud.create_task(session, db_task)
 
-    return db_task
+    # Add to database
+    tasks = task_crud.create_task(session, db_task)
+
+    if not tasks:
+        raise HTTPException(status_code=404, detail="Fail to add task")
+
+    return {"status": 'success', "detail": tasks}
 
 @router.get("/", response_model=List[TaskRead])
 def read_tasks(
@@ -48,6 +53,7 @@ def read_tasks(
     # Apply completion status filter if provided
     if completed is not None:
         query = query.where(Task.completed == completed)
+    query = query.order_by(desc(Task.created_at))
 
     # Apply pagination
     tasks = session.exec(query.offset(offset).limit(limit)).all()
@@ -69,7 +75,7 @@ def read_task(*, session: Session = Depends(get_session), task_id: str):
     return task
 
 ...
-@router.put("/{task_id}", response_model=TaskRead)
+@router.put("/{task_id}", response_model=ResponseModel)
 def update_task(
     *,
     session: Session = Depends(get_session),
@@ -82,7 +88,6 @@ def update_task(
     - **task_id**: The unique identifier of the task.
     - Request body: All task fields (even unchanged ones).
     """
-    print(task)
     db_task = session.get(Task, task_id)
     if not db_task:
         raise HTTPException(
@@ -93,11 +98,11 @@ def update_task(
     # Update all attributes
     db_task = task_crud.update_task(session, db_task, task)
 
-    return db_task
+    return {"status": 'success', "detail": db_task}
 
 
 ...
-@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/remove/{task_id}",status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(*, session: Session = Depends(get_session), task_id: str):
     """
     Delete a task.
@@ -105,8 +110,8 @@ def delete_task(*, session: Session = Depends(get_session), task_id: str):
     - **task_id**: The unique identifier of the task.
     """
 
-    isRemoved = task_crud.remove_task(session, task_id)
-    if not isRemoved:
+    is_removed = task_crud.remove_task(session, task_id)
+    if not is_removed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task with ID {task_id} not found"
@@ -116,14 +121,14 @@ def delete_task(*, session: Session = Depends(get_session), task_id: str):
     return None
     
 ...
-@router.delete("/remove_all", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/remove_all",status_code=status.HTTP_204_NO_CONTENT)
 def delete_all_task(*, session: Session = Depends(get_session)):
     """
     Delete all task.
     """
 
-    isRemoved = task_crud.remove_all_task(session)
-    if not isRemoved:
+    is_removed = task_crud.remove_all_task(session)
+    if not is_removed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Task not found"
