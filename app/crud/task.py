@@ -1,5 +1,7 @@
+
+
 from app.models.task import Task, SubTask, TaskCreate, TaskRead, TaskUpdate
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 
 
 def create_task(db: Session, db_task: Task):
@@ -51,24 +53,41 @@ def remove_task(db: Session, task_id: str):
     if not db_task:
         return False
     else:
+        subtasks_query = select(SubTask).where(SubTask.task_id == task_id)
+        db_subtasks = db.exec(subtasks_query).all()
+
+        # Delete subtasks
+        for subtask in db_subtasks:
+            db.delete(subtask)
+
+        # Delete the task
         db.delete(db_task)
+
+        # Commit the transaction
+        db.commit()
+        db.delete(db_task)
+
         db.commit()
         return True
     return False
 
 def remove_all_task(db: Session):
     # Use the session to execute a bulk delete
-    statement = select(Task)
-    tasks = db.exec(statement).all()
+    statement = delete(Task)
+    tasks = db.exec(statement)
+    subTask_statement = delete(SubTask)
+    subtasks = db.exec(subTask_statement)
 
-    if not tasks:
-        print("No tasks found to remove.")
-        return False
-
-    # Remove each task
-    for task in tasks:
-        print(f"Removing task: {task.title}")
-        db.delete(task)
+    print(tasks)
+    #
+    # if not tasks:
+    #     print("No tasks found to remove.")
+    #     return False
+    #
+    # # Remove each task
+    # for task in tasks:
+    #     print(f"Removing task: {task.title}")
+    #     db.delete(task)
 
     # Commit the changes to the database
     db.commit()
