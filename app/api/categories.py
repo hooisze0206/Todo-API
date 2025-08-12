@@ -4,7 +4,7 @@ from typing import List
 
 from app.database.config import get_session
 from app.models.response_model import ResponseModel
-from app.models.categories_model import Categories, CategoriesRead, CategoriesCreate
+from app.models.categories_model import Categories, CategoriesRead, CategoriesCreate, TotalCategories
 from app.crud import categories as categories_crud
 
 router = APIRouter(prefix="/api/categories", tags=["Categories"])
@@ -73,3 +73,13 @@ def delete_all_categories(*, session: Session = Depends(get_session)):
 
     # Return no content
     return None
+
+@router.get("/total_categories", response_model=List[TotalCategories])
+def read_categories(
+    *,
+    session: Session = Depends(get_session)
+):
+
+    categories = categories_crud.get_total_task_categories(session)
+
+    return categories

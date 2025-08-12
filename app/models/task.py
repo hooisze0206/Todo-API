@@ -4,9 +4,12 @@ from sqlmodel import Field, SQLModel, Relationship
 import uuid
 
 
+
+
 def generate_uuid():
     """Generate a unique UUID for a task."""
     return str(uuid.uuid4())
+
 
 class SubTask(SQLModel, table=True):
     id: str = Field(
