@@ -3,12 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.config import create_db_and_tables
 from app.api.task import router as tasks_router
 from app.api.categories import router as categories_router
+from contextlib import asynccontextmanager
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup event
+    create_db_and_tables()
+    yield
 
 app = FastAPI(
     title="Task Management API",
     description="API for managing tasks with FastAPI, SQLModel, and Pydantic",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 origins = [
@@ -29,15 +36,13 @@ app.add_middleware(
 app.include_router(tasks_router)
 app.include_router(categories_router)
 
+
 @app.get("/")
 async def root():
     """Health check endpoint for the API."""
     return {"message": "Welcome to the Task Management API"}
 
-@app.on_event("startup")
-def on_startup():
-   create_db_and_tables()
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

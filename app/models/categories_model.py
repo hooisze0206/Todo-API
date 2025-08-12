@@ -36,4 +36,9 @@ class CategoriesCreate(CategoriesBase):
     """Model for creating a new task."""
     pass
 
-    
+class TotalCategories(SQLModel):
+    """Model for reading a task."""
+    id: str
+    title: str
+    color: str
+    total_categories: int    
